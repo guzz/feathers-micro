@@ -3,7 +3,7 @@ import { feathers } from '@feathersjs/feathers'
 import configuration from '@feathersjs/configuration'
 import { koa, rest, bodyParser, errorHandler, parseAuthentication, cors, serveStatic } from '@feathersjs/koa'
 import socketio from '@feathersjs/socketio'
-import { setGateway } from '@feathers-micro/microservice'
+import { setKoaGateway } from '@feathers-micro/microservice'
 
 import { configurationValidator } from './configuration'
 import type { Application } from './declarations'
@@ -23,7 +23,7 @@ app.use(serveStatic(app.get('public')))
 app.use(errorHandler())
 app.use(parseAuthentication())
 app.use(bodyParser())
-app.configure(setGateway([app.get('authentication')?.secret ?? '']))
+app.configure(setKoaGateway([app.get('authentication')?.secret ?? '']))
 
 // Configure services and transports
 app.configure(rest())

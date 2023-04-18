@@ -1,14 +1,14 @@
 import { randomUUID } from 'crypto'
 import session from 'koa-session'
-import type { Middleware, Application, Koa } from '@feathersjs/koa'
+import type { Middleware, Application } from '@feathersjs/koa'
 
-export const setGateway = (keys: string | string[]) => (app: Application) => {
+export const setKoaGateway = (keys: string | string[]) => (app: Application) => {
   app.keys = Array.isArray(keys) ? keys : [keys]
   // @ts-ignore
   app.use(session(app.get('session') ?? {}, app))
-  app.use(sessionMiddleware)
+  app.use(koaSessionMiddleware)
 }
-export const sessionMiddleware: Middleware = async (ctx, next) => {
+export const koaSessionMiddleware: Middleware = async (ctx, next) => {
   if (ctx.session && !ctx.session.id) {
     const id = randomUUID()
     ctx.session.id = id

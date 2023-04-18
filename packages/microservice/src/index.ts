@@ -1,3 +1,3 @@
 export * from './adaptor'
-export * from './gateway'
+export * from './koa'
 export * from './authentication'
