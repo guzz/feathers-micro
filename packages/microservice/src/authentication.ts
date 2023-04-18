@@ -16,21 +16,24 @@ export interface MicroAuthenticationRequest {
 
 export type MicroAuthenticationOptions = {
   url: string
+  getParamsFromBody?: boolean
 }
 
 const SPLIT_HEADER = /(\S+)\s+(\S+)/
 
 export class MicroAuthentication extends AuthenticationService {
   fetch: AxiosInstance
+  getParamsFromBody: boolean
 
   constructor(app: Application, configKey = 'authentication', options: MicroAuthenticationOptions) {
-    const { url } = options
+    const { url, getParamsFromBody } = options
     if (!url) {
       throw new Error('Url for microservice not provided')
     }
     super(app, configKey, options)
+    this.getParamsFromBody = !!options.getParamsFromBody
     this.fetch = axios.create({
-      baseURL: url,
+      baseURL: getParamsFromBody ? url : `${url}/${configKey}`,
       withCredentials: true
     })
   }
@@ -100,6 +103,27 @@ export class MicroAuthentication extends AuthenticationService {
     return super.setup()
   }
 
+  getAxiosRequestParams(
+    type: 'login' | 'logout',
+    data: MicroAuthenticationRequest,
+    params?: Params,
+    id?: string | null
+  ): AxiosRequestConfig {
+    const paramsForPost = {
+      service: this.configKey,
+      method: type === 'login' ? 'create' : 'remove',
+      data: type === 'login' ? data : { accessToken: id, strategy: 'jwt' }
+    }
+    return {
+      method: this.getParamsFromBody || type === 'login' ? 'post' : 'delete',
+      data: this.getParamsFromBody ? paramsForPost : type === 'login' ? data : undefined,
+      url: !this.getParamsFromBody && type === 'logout' ? `${id ? '/' + id : ''}` : undefined,
+      headers: {
+        ...(params?.headers ?? {})
+      }
+    }
+  }
+
   async makeRequest(config: AxiosRequestConfig) {
     try {
       const { data } = await this.fetch(config)
@@ -112,38 +136,14 @@ export class MicroAuthentication extends AuthenticationService {
   }
 
   async authenticate(authentication: MicroAuthenticationRequest) {
-    return this.makeRequest({
-      method: 'post',
-      data: {
-        service: this.configKey,
-        method: 'create',
-        data: authentication
-      }
-    })
+    return this.makeRequest(this.getAxiosRequestParams('login', authentication))
   }
 
   async create(data: MicroAuthenticationRequest, params?: Params) {
     return this.authenticate(data)
   }
 
-  /**
-   * Mark a JWT as removed. By default only verifies the JWT and returns the result.
-   * Triggers the `logout` event.
-   *
-   * @param id The JWT to remove or null
-   * @param params Service call parameters
-   */
   async remove(id: string | null, params?: Params) {
-    return this.makeRequest({
-      method: 'post',
-      data: {
-        service: this.configKey,
-        method: 'remove',
-        data: {
-          accessToken: id,
-          strategy: 'jwt'
-        }
-      }
-    })
+    return this.makeRequest(this.getAxiosRequestParams('logout', {}, params, id))
   }
 }
