@@ -1,0 +1,48 @@
+service: todo-component
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: eu-west-1
+  stage: dev
+  versionFunctions: false
+  deploymentBucket: tester-account-sls-deployments
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    useChildProcesses: true
+    httpPort: 3020
+    websocketPort: 3021
+    lambdaPort: 3022
+
+functions:
+  service:
+    handler: lib/index.handler
+    events:
+      - http:
+          path: '/'
+          method: post
+          cors: true
+      - http:
+          path: '{service}'
+          method: get
+          cors: true
+      - http:
+          path: '{service}/{id}'
+          method: get
+          cors: true
+      - http:
+          path: '{service}'
+          method: post
+          cors: true
+      - http:
+          path: '{service}/{id}'
+          method: patch
+          cors: true
+      - http:
+          path: '{service}/{id}'
+          method: delete
+          cors: true

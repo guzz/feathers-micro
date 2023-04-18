@@ -1,0 +1,28 @@
+service: user-component
+
+provider:
+  name: aws
+  runtime: nodejs12.x
+  region: eu-west-1
+  stage: dev
+  versionFunctions: false
+  deploymentBucket: tester-account-sls-deployments
+
+plugins:
+  - serverless-offline
+
+custom:
+  serverless-offline:
+    useChildProcesses: true
+    httpPort: 3010
+    websocketPort: 3011
+    lambdaPort: 3012
+
+functions:
+  service:
+    handler: lib/index.handler
+    events:
+      - http:
+          path: '/'
+          method: post
+          cors: true
