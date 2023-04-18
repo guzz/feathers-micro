@@ -9,6 +9,7 @@
   "author": {},
   "contributors": [],
   "bugs": {},
+  "private": true,
   "engines": {
     "node": ">= 18.15.0"
   },
@@ -36,7 +37,7 @@
     "start": "node lib/",
     "prettier": "npx prettier \"**/*.ts\" --write",
     "mocha": "cross-env NODE_ENV=test mocha test/ --require ts-node/register --recursive --extension .ts --exit",
-    "test": "cross-env NODE_ENV=test npm run migrate && npm run mocha",
+    "test": "cross-env NODE_ENV=test yarn migrate && yarn mocha",
     "migrate": "knex migrate:latest",
     "migrate:make": "knex migrate:make"
   },

@@ -2,7 +2,8 @@ module.exports = {
   'root': true,
   'env': {
     'es2021': true,
-    'node': true
+    'node': true,
+    'mocha': true
   },
   'extends': [
     'eslint:recommended',
@@ -18,7 +19,7 @@ module.exports = {
   'plugins': [
     '@typescript-eslint'
   ],
-  'ignorePatterns': ['dist/**/*', '*.test.*', '*.spec.*'],
+  'ignorePatterns': ['dist/**/*', '**/*.test.*', '**/*.spec.*'],
   'rules': {
     'indent': [
       'error',

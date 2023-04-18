@@ -9,6 +9,7 @@
   "author": {},
   "contributors": [],
   "bugs": {},
+  "private": true,
   "engines": {
     "node": ">= 18.15.0"
   },
