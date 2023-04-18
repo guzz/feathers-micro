@@ -15,7 +15,7 @@ export const configureAuthentication = async (
   if (headers['Authorization']) {
     headers.authorization = headers['Authorization']
   }
-  const authSettings = feathersApp.get('authentication') ?? {}
+  const authSettings = feathersApp.get(authServicePath) ?? {}
 
   const authService = feathersApp.defaultAuthentication?.(authServicePath)
 
