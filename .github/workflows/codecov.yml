@@ -1,0 +1,50 @@
+name: Codecov
+
+on:
+  pull_request:
+    branches:
+      - 'main'
+    types:
+      - opened
+      - synchronize
+      - reopened
+
+jobs:
+  codecov-lint:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+      - uses: formsort/action-check-codecov-config@v1
+
+  codecov:
+    needs:
+      - codecov-lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: lts/*
+          cache: 'yarn'
+          cache-dependency-path: 'packages/**/yarn.lock'
+
+      - name: Install dependencies
+        run: yarn ci
+
+      - name: Run tests
+        run: yarn test
+
+      - name: Upload microservice coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: ./packages/microservice/coverage/lcov.info
+          flags: microservice
+          token: ${{ secrets.CODECOV_TOKEN }}
+
+      - name: Upload serverless coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          files: ./packages/serverless/coverage/lcov.info
+          flags: serverless
+          token: ${{ secrets.CODECOV_TOKEN }}

@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
-    "test": "nyc mocha",
+    "test": "nyc --reporter=lcov mocha",
     "lint": "eslint",
     "lint:fix": "eslint --fix"
   },
