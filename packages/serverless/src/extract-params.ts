@@ -1,11 +1,11 @@
 import { getService } from './get-service'
 import { getFeathersMethod } from './methods'
 import { getArgs } from './get-args'
-import { FeathersApplication, ServerlessParams, APIGatewayProxyEvent } from './declarations'
+import { FeathersApplication, ServerlessParams, ServerlessGatewayProxyEvent } from './declarations'
 import { AuthenticationRequest } from '@feathersjs/authentication/lib'
 
 export const extractParams = (
-  event: APIGatewayProxyEvent,
+  event: ServerlessGatewayProxyEvent,
   app: FeathersApplication,
   extraParams: AuthenticationRequest = {}
 ): ServerlessParams => {

@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "tsc --watch",
     "build": "tsc",
-    "test": "mocha",
+    "test": "nyc mocha",
     "lint": "eslint",
     "lint:fix": "eslint --fix"
   },
@@ -28,6 +28,7 @@
     "uberproto": "^2.0.6"
   },
   "devDependencies": {
+    "@feathersjs/authentication-local": "^5.0.4",
     "@feathersjs/feathers": "^5.0.4",
     "@types/aws-lambda": "^8.10.114",
     "@types/lodash": "^4.14.194",
@@ -40,6 +41,7 @@
     "lodash": "^4.17.21",
     "mocha": "^10.2.0",
     "nock": "^13.3.0",
+    "nyc": "^15.1.0",
     "prettier": "^2.8.7",
     "sinon": "^15.0.3",
     "tsc-node": "^0.0.3"

@@ -27,9 +27,6 @@ export class MicroAuthentication extends AuthenticationService {
 
   constructor(app: Application, configKey = 'authentication', options: MicroAuthenticationOptions) {
     const { url, getParamsFromBody } = options
-    if (!url) {
-      throw new Error('Url for microservice not provided')
-    }
     super(app, configKey, options)
     this.getParamsFromBody = !!options.getParamsFromBody
     this.fetch = axios.create({
@@ -44,38 +41,6 @@ export class MicroAuthentication extends AuthenticationService {
       header: 'Authorization',
       schemes: ['Bearer', 'JWT']
     }
-  }
-
-  get strategyNames() {
-    return super.strategyNames
-  }
-
-  register(name: string, strategy: AuthenticationStrategy) {
-    super.register(name, strategy)
-  }
-
-  getStrategies(...names: string[]) {
-    return super.getStrategies(...names)
-  }
-
-  getStrategy(name: string) {
-    return super.getStrategy(name)
-  }
-
-  async createAccessToken(
-    payload: string | Buffer | object,
-    optsOverride?: SignOptions,
-    secretOverride?: Secret
-  ) {
-    return super.createAccessToken(payload, optsOverride, secretOverride)
-  }
-
-  async verifyAccessToken(accessToken: string, optsOverride?: VerifyOptions, secretOverride?: Secret) {
-    return super.verifyAccessToken(accessToken, optsOverride, secretOverride)
-  }
-
-  async handleConnection(event: ConnectionEvent, connection: any, authResult?: AuthenticationResult) {
-    return super.handleConnection(event, connection, authResult)
   }
 
   async parse(req: IncomingMessage, res: ServerResponse, ...names: string[]) {
@@ -99,10 +64,6 @@ export class MicroAuthentication extends AuthenticationService {
     } as AuthenticationRequest
   }
 
-  async setup() {
-    return super.setup()
-  }
-
   getAxiosRequestParams(
     type: 'login' | 'logout',
     data: MicroAuthenticationRequest,
@@ -114,13 +75,16 @@ export class MicroAuthentication extends AuthenticationService {
       method: type === 'login' ? 'create' : 'remove',
       data: type === 'login' ? data : { accessToken: id, strategy: 'jwt' }
     }
+    const accessToken = id ?? params?.authentication?.accessToken
+    const headers = {
+      ...(params?.headers ?? {}),
+      Authorization: accessToken
+    }
     return {
       method: this.getParamsFromBody || type === 'login' ? 'post' : 'delete',
       data: this.getParamsFromBody ? paramsForPost : type === 'login' ? data : undefined,
       url: !this.getParamsFromBody && type === 'logout' ? `${id ? '/' + id : ''}` : undefined,
-      headers: {
-        ...(params?.headers ?? {})
-      }
+      headers
     }
   }
 

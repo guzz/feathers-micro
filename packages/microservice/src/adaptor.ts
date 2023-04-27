@@ -1,4 +1,3 @@
-import { BadRequest, MethodNotAllowed } from '@feathersjs/errors'
 import { _ } from '@feathersjs/commons'
 import {
   AdapterBase,
@@ -15,8 +14,7 @@ export interface MicroServiceOptions extends AdapterServiceOptions {
   getParamsFromBody?: boolean
 }
 
-type CustomParams<P> = {
-  params: P
+export type CustomParams = {
   data: { [key: string]: unknown } | { [key: string]: unknown }[]
   method: string
 }
@@ -130,15 +128,12 @@ export class MicroAdapter<
   }
 
   async _update(id: Id, data: Data, params: ServiceParams = {} as ServiceParams): Promise<Result> {
-    if (id === null || Array.isArray(data)) {
-      throw new BadRequest("You can not replace multiple instances. Did you mean 'patch'?")
-    }
     const { url, getParamsFromBody } = this.getOptions(params)
-    const { query, headers } = params
-    const bodyParams = this.getBodyParams('update', params, {}, id)
+    const { query } = params
+    const bodyParams = this.getBodyParams('update', params, data, id)
     return this.makeRequest({
       url: getParamsFromBody ? url : `${url}/${id}`,
-      method: getParamsFromBody ? 'post' : 'update',
+      method: getParamsFromBody ? 'post' : 'put',
       params: getParamsFromBody ? undefined : query,
       data: getParamsFromBody ? bodyParams : data,
       headers: this.getHeaders(params)
@@ -153,9 +148,6 @@ export class MicroAdapter<
     data: PatchData,
     params: ServiceParams = {} as ServiceParams
   ): Promise<Result | Result[]> {
-    if (id === null && !this.allowsMulti('patch', params)) {
-      throw new MethodNotAllowed('Can not patch multiple entries')
-    }
     const { url, getParamsFromBody } = this.getOptions(params)
     const { query } = params
     const bodyParams = this.getBodyParams('patch', params, data, id)
@@ -172,12 +164,9 @@ export class MicroAdapter<
   async _remove(id: Id, params?: ServiceParams): Promise<Result>
   async _remove(id: NullableId, _params?: ServiceParams): Promise<Result | Result[]>
   async _remove(id: NullableId, params: ServiceParams = {} as ServiceParams): Promise<Result | Result[]> {
-    if (id === null && !this.allowsMulti('remove', params)) {
-      throw new MethodNotAllowed('Can not remove multiple entries')
-    }
     const { url, getParamsFromBody } = this.getOptions(params)
     const { query } = params
-    const bodyParams = this.getBodyParams('delete', params, {}, id)
+    const bodyParams = this.getBodyParams('remove', params, {}, id)
     return this.makeRequest({
       url: getParamsFromBody ? url : `${url}/${id}`,
       method: getParamsFromBody ? 'post' : 'delete',
@@ -187,9 +176,9 @@ export class MicroAdapter<
     })
   }
 
-  async _custom(args: CustomParams<ServiceParams>): Promise<Result>
-  async _custom(args: CustomParams<ServiceParams>): Promise<Result | Result[]> {
-    const { params, data, method } = args
+  async _custom(args: CustomParams, params?: ServiceParams): Promise<Result>
+  async _custom(args: CustomParams, params: ServiceParams = {} as ServiceParams): Promise<Result | Result[]> {
+    const { data, method } = args
     const { url } = this.getOptions(params)
     const bodyParams = this.getBodyParams(method, params, data)
     return this.makeRequest({
@@ -225,10 +214,6 @@ export class MicroService<
   async create(data: Data, params?: ServiceParams): Promise<Result>
   async create(data: Data[], params?: ServiceParams): Promise<Result[]>
   async create(data: Data | Data[], params?: ServiceParams): Promise<Result | Result[]> {
-    if (Array.isArray(data) && !this.allowsMulti('create', params)) {
-      throw new MethodNotAllowed('Can not create multiple entries')
-    }
-
     return this._create(data, params)
   }
 
@@ -256,7 +241,7 @@ export class MicroService<
     return this._remove(id, mergedParams)
   }
 
-  async custom(args: CustomParams<ServiceParams>): Promise<Result | Result[]> {
-    return this._custom(args)
+  async custom(args: CustomParams, params?: ServiceParams): Promise<Result | Result[]> {
+    return this._custom(args, params)
   }
 }

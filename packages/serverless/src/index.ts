@@ -1,15 +1,10 @@
 import Proto from 'uberproto'
 
-import {
-  BodyProperties,
-  MixinApp,
-  FeathersApplication,
-  ServerlessConnectorMixin,
-  Middleware
-} from './declarations'
+import { BodyProperties, MixinApp, FeathersApplication, Middleware } from './declarations'
 import { extractParams } from './extract-params'
 import { runMiddleware } from './middleware'
 import { configureAuthentication } from './authentication'
+import { APIGatewayProxyResult } from 'aws-lambda'
 export * from './declarations'
 
 export const serverless = (feathersApp: FeathersApplication, ...middlewares: Middleware[]) => {
@@ -27,7 +22,7 @@ export const serverless = (feathersApp: FeathersApplication, ...middlewares: Mid
   })
   // eslint-disable-next-line @typescript-eslint/ban-ts-comment
   // @ts-ignore
-  const mixin: MixinApp<ServerlessConnectorMixin> = {
+  const mixin: MixinApp<FeathersApplication> = {
     set(key: string, value: BodyProperties) {
       if (!this.variables) {
         this.variables = {}
@@ -65,13 +60,16 @@ export const serverless = (feathersApp: FeathersApplication, ...middlewares: Mid
         const middlewareContext = {
           event,
           cb,
-          context,
           feathersApp
         }
 
         const params = extractParams(event, feathersApp, extraParams)
 
-        await runMiddleware(middlewareContext, params, middlewares)
+        try {
+          await runMiddleware(middlewareContext, params, middlewares)
+        } catch (err) {
+          return cb(null, err as APIGatewayProxyResult)
+        }
 
         const { serviceName, method, args, feathersMethod, getParamsFromBody, body, query } = params
 

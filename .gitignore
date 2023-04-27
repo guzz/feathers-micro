@@ -2,3 +2,5 @@ node_modules
 *.sqlite
 lerna-debug.log
 yarn-error.log
+dist/
+.nyc_output/

@@ -8,7 +8,11 @@ import {
 } from 'aws-lambda'
 import { FeathersMethod, HttpMethod } from './methods'
 export { FeathersApplication, Query }
-export { APIGatewayProxyHandler, APIGatewayProxyEvent }
+export { APIGatewayProxyHandler, APIGatewayProxyEvent, LambdaContext }
+export type ServerlessGatewayProxyEvent = Pick<
+  APIGatewayProxyEvent,
+  'httpMethod' | 'body' | 'path' | 'queryStringParameters' | 'headers' | 'resource'
+>
 export type Maybe<T> = T | undefined | null
 export type BodyPropertiesValues =
   | string
@@ -44,10 +48,9 @@ export type ServerlessParams = {
   feathersMethod: FeathersMethodValues
   getParamsFromBody: boolean
 }
-export type MixinApp<T> = FeathersApplication & T
+export type MixinApp<T> = T & ServerlessConnectorMixin
 export type ServerlessMiddlewareParams = {
-  event: APIGatewayProxyEvent
-  context: LambdaContext
+  event: ServerlessGatewayProxyEvent
   cb: Callback<APIGatewayProxyResult>
   feathersApp: FeathersApplication
 }

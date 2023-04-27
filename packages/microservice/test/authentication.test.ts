@@ -1,10 +1,13 @@
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import 'mocha'
 import assert from 'assert'
-import { feathers, Application } from '@feathersjs/feathers'
+import { feathers, Application as FeathersApplication, HookContext } from '@feathersjs/feathers'
 import { memory, MemoryService } from '@feathersjs/memory'
+import { koa, rest, bodyParser, errorHandler, cors, Application } from '@feathersjs/koa'
+import { authenticate } from '@feathersjs/authentication'
 import nock from 'nock'
 import { matches } from 'lodash'
+import axios, { AxiosError } from 'axios'
 
 import { defaultOptions as baseOptions } from '@feathersjs/authentication/lib/options'
 
@@ -28,7 +31,7 @@ const logoutRequest = {
 }
 
 describe('authentication/service/paramsFromBody', () => {
-  let app: Application<{
+  let app: FeathersApplication<{
     authentication: MicroAuthentication
     users: MemoryService
   }>
@@ -105,22 +108,34 @@ describe('authentication/service/paramsFromBody', () => {
           accessToken: null
         }
       }
-      nock(configUrl).post('/', matches(requestWithNoAccessToken)).reply(200, {
-        accessToken: 'accessToken'
-      })
-      const authResult = await app.service('authentication').remove(null)
+      nock(configUrl)
+        .post('/', matches(requestWithNoAccessToken))
+        .reply(200, function (uri, req) {
+          return {
+            accessToken: this.req.headers.authorization
+          }
+        })
 
+      const authResult = await app.service('authentication').remove(null, {
+        authentication: {
+          accessToken: 'accessToken'
+        }
+      })
       assert.deepStrictEqual(authResult, {
         accessToken: 'accessToken'
       })
     })
 
     it('passes when id is set and matches accessToken', async () => {
-      nock(configUrl).post('/', matches(logoutRequest)).reply(200, {
-        accessToken: 'accessToken'
-      })
-      const authResult = await app.service('authentication').remove('accessToken')
+      nock(configUrl)
+        .post('/', matches(logoutRequest))
+        .reply(200, function (uri, req) {
+          return {
+            accessToken: this.req.headers.authorization
+          }
+        })
 
+      const authResult = await app.service('authentication').remove('accessToken')
       assert.deepStrictEqual(authResult, {
         accessToken: 'accessToken'
       })
@@ -129,7 +144,7 @@ describe('authentication/service/paramsFromBody', () => {
 })
 
 describe('authentication/service/rest', () => {
-  let app: Application<{
+  let app: FeathersApplication<{
     authentication: MicroAuthentication
     users: MemoryService
   }>
@@ -184,13 +199,15 @@ describe('authentication/service/rest', () => {
 
   describe('remove', () => {
     it('can remove with authentication strategy set', async () => {
-      nock(configUrl).delete('/authentication').reply(200, {
-        accessToken: 'accessToken'
-      })
+      nock(configUrl)
+        .delete('/authentication')
+        .reply(200, function (uri, req) {
+          return {
+            accessToken: this.req.headers.authorization
+          }
+        })
       const authResult = await app.service('authentication').remove(null, {
         authentication: {
-          strategy: 'first',
-          username: 'David',
           accessToken: 'accessToken'
         }
       })
@@ -201,20 +218,138 @@ describe('authentication/service/rest', () => {
     })
 
     it('passes when id is set and matches accessToken', async () => {
-      nock(configUrl).delete('/authentication/accessToken').reply(200, {
-        accessToken: 'test'
-      })
+      nock(configUrl)
+        .delete('/authentication/accessToken')
+        .reply(200, function (uri, req) {
+          return {
+            accessToken: this.req.headers.authorization
+          }
+        })
       const authResult = await app.service('authentication').remove('accessToken', {
         authentication: {
-          strategy: 'first',
-          username: 'David',
           accessToken: 'test'
         }
       })
 
       assert.deepStrictEqual(authResult, {
-        accessToken: 'test'
+        accessToken: 'accessToken'
       })
     })
+  })
+})
+
+describe('authentication/hooks', () => {
+  type Person = {
+    email: string
+    password: string
+  }
+
+  const samplePerson: Person = {
+    email: 'dave@alberto.com',
+    password: '123456'
+  }
+  let app: Application<{
+    users: MemoryService<Person>
+    dummy: MemoryService
+    authentication: MicroAuthentication
+  }>
+
+  app = koa(feathers())
+  app.use(errorHandler())
+  app.use(cors())
+  app.use(bodyParser())
+  app.configure(rest())
+  app.set('authentication', {
+    entity: 'user',
+    service: 'users',
+    secret: 'supersecret',
+    authStrategies: ['local', 'jwt'],
+    parseStrategies: ['jwt'],
+    local: {
+      usernameField: 'email',
+      passwordField: 'password'
+    }
+  })
+  app.use(
+    'authentication',
+    new MicroAuthentication(app, 'authentication', {
+      url: configUrl
+    })
+  )
+  app.use('users', memory())
+  app.use('dummy', memory())
+  app.service('dummy').hooks({
+    before: {
+      get: [authenticate('jwt')],
+      find: [authenticate('jwt')]
+    }
+  })
+
+  before(async () => {
+    await app.listen(9776)
+    await app.service('dummy').create({ teste: 'teste' })
+  })
+
+  after(() => app.teardown())
+
+  it('fail authentication while not authenticated', async () => {
+    try {
+      await axios.get('http://localhost:9776/dummy/0')
+      assert.fail('Should never get here')
+    } catch (err) {
+      let error = err as AxiosError<{ name?: string }>
+      const feathersMessage = error.response?.data?.name
+      assert.strictEqual(feathersMessage, 'NotAuthenticated')
+    }
+  })
+
+  it('authenticate with good access token', async () => {
+    let authToken: string | undefined
+    let authStrategy: string | undefined
+    nock(configUrl)
+      .post('/authentication')
+      .reply(200, function (uri, body: { accessToken: string; strategy: string }) {
+        authToken = body?.accessToken
+        authStrategy = body?.strategy
+      })
+    try {
+      await axios.get('http://localhost:9776/dummy/0', {
+        headers: {
+          Authorization: 'Bearer MY_GREAT_TOKEN'
+        }
+      })
+    } catch (err) {
+      assert.fail('Should never get here')
+    }
+    assert.strictEqual(authToken, 'MY_GREAT_TOKEN')
+    assert.strictEqual(authStrategy, 'jwt')
+  })
+
+  it('authenticate with bad access token', async () => {
+    let authToken: string | undefined
+    let authStrategy: string | undefined
+    nock(configUrl)
+      .post('/authentication')
+      .reply(200, function (uri, body: { accessToken: string; strategy: string }) {
+        console.log('this', this.req?.headers)
+        console.log('body', body)
+        authToken = body?.accessToken
+        authStrategy = body?.strategy
+        return {
+          ble: 'hte'
+        }
+      })
+    try {
+      await axios.get('http://localhost:9776/dummy/0', {
+        headers: {
+          Authorization: 'PASS MY_GREAT_TOKEN'
+        }
+      })
+      assert.fail('Should never get here')
+    } catch (err) {
+      let error = err as AxiosError<{ name?: string }>
+      const feathersMessage = error.response?.data?.name
+      assert.strictEqual(feathersMessage, 'NotAuthenticated')
+    }
   })
 })

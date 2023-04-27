@@ -1,7 +1,7 @@
 import { FeathersMethod } from './methods'
 import { BodyProperties, FeathersMethodValues, Maybe, Query } from './declarations'
 
-type GetArgsOptions = {
+export type GetArgsOptions = {
   query?: Query
   feathersId?: Maybe<string>
   body?: BodyProperties | BodyProperties[]
@@ -9,7 +9,7 @@ type GetArgsOptions = {
 }
 
 export function getArgs(
-  feathersMethod: FeathersMethodValues,
+  feathersMethod: string,
   { query, feathersId, body, params = {} }: GetArgsOptions
 ): unknown {
   return {
