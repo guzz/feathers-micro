@@ -42,14 +42,14 @@ jobs:
         run: yarn test
 
       - name: Upload microservice coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           files: ./packages/microservice/coverage/lcov.info
           flags: microservice
           token: ${{ secrets.CODECOV_TOKEN }}
 
       - name: Upload serverless coverage to Codecov
-        uses: codecov/codecov-action@v2
+        uses: codecov/codecov-action@v3
         with:
           files: ./packages/serverless/coverage/lcov.info
           flags: serverless
