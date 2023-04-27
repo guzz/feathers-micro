@@ -30,7 +30,7 @@ jobs:
           cache-dependency-path: 'packages/**/yarn.lock'
 
       - name: Install dependencies
-        run: yarn ci
+        run: yarn
 
       - name: Run tests
         run: yarn test
