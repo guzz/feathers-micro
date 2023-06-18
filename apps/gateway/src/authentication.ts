@@ -11,7 +11,7 @@ declare module './declarations' {
 }
 
 export const authentication = (app: Application) => {
-  const authentication = new MicroAuthentication(app, 'authentication', { url: 'http://localhost:3010/dev' })
+  const authentication = new MicroAuthentication(app, 'authentication', { url: 'http://localhost:3010/dev', getParamsFromBody: true })
   // @ts-ignore
   app.use('authentication', authentication)
 }
