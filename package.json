@@ -12,7 +12,7 @@
     "dev": "lerna run dev --parallel",
     "build": "lerna run build --parallel",
     "test": "lerna run test --parallel",
-    "publish": "lerna publish --no-private --parallel",
+    "publish": "lerna publish --no-private",
     "release": "run-s test build publish",
     "lerna:add": "lerna add",
     "dep:check": "check-dependency-version-consistency ."
