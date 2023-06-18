@@ -37,6 +37,9 @@ To run the example:
 # install the dependencies
 yarn
 
+# bootstrap internal libraries
+yarn bootstrap
+
 # run the 3 applications at the same time
 yarn dev
 ```
