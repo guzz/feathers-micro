@@ -8,6 +8,10 @@
   "command": {
     "run": {
       "npmClient": "yarn"
+    },
+    "publish": {
+      "npmClient": "yarn",
+      "conventionalCommits": true
     }
   }
 }
