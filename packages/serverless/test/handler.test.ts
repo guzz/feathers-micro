@@ -4,7 +4,7 @@ import assert from 'assert'
 
 import { Person, createTestApp, TestApplication } from './fixtures'
 
-import { MixinApp, ServerlessGatewayProxyEvent, APIGatewayProxyEvent, LambdaContext } from '../src'
+import { ServerlessGatewayProxyEvent, APIGatewayProxyEvent, LambdaContext } from '../src'
 
 const samplePerson: Person = {
   email: 'email@email.com',
@@ -21,7 +21,7 @@ const sampleEvent: ServerlessGatewayProxyEvent = {
 }
 
 const createHandler = (
-  app: MixinApp<TestApplication>,
+  app: TestApplication,
   service: string,
   method: string,
   id?: number,
@@ -178,20 +178,13 @@ const createHandler = (
 }
 
 describe('serverless/handler', () => {
-  let app: MixinApp<TestApplication>
+  let app: TestApplication
   let authResult: { accessToken?: string }
 
   beforeEach(async () => {
     const resp = await createTestApp(samplePerson)
     app = resp.app
     authResult = resp.authResult
-  })
-
-  it('set setup func', async () => {
-    // @ts-ignore
-    const setup = async (...args) => args
-    const newApp = await app.setup(setup)
-    assert.deepEqual(newApp.setupFunc, setup)
   })
 
   it('get an inexistent service', async () => {
@@ -277,7 +270,7 @@ describe('serverless/handler', () => {
 })
 
 describe('serverless/middleware', () => {
-  let app: MixinApp<TestApplication>
+  let app: TestApplication
   let authResult: { accessToken?: string }
 
   beforeEach(async () => {
@@ -310,7 +303,7 @@ describe('serverless/middleware', () => {
 })
 
 describe('serverless/middleware/error', () => {
-  let app: MixinApp<TestApplication>
+  let app: TestApplication
   let authResult: { accessToken?: string }
 
   beforeEach(async () => {

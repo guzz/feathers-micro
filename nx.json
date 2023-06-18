@@ -21,7 +21,7 @@
     },
     "test": {
       "outputs": [
-        "{projectRoot}/.nyc_output"
+        "{projectRoot}/coverage"
       ]
     }
   }

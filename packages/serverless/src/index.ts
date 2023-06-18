@@ -1,13 +1,15 @@
-import Proto from 'uberproto'
-
-import { BodyProperties, MixinApp, FeathersApplication, Middleware } from './declarations'
+import { Application, BodyProperties, FeathersApplication, Middleware } from './declarations'
 import { extractParams } from './extract-params'
 import { runMiddleware } from './middleware'
 import { configureAuthentication } from './authentication'
 import { APIGatewayProxyResult } from 'aws-lambda'
+import { routing } from '@feathersjs/transport-commons'
 export * from './declarations'
 
-export const serverless = (feathersApp: FeathersApplication, ...middlewares: Middleware[]) => {
+export function serverless<S = any, C = any>(
+  feathersApp: FeathersApplication<S, C>,
+  ...middlewares: Middleware[]
+): Application<S, C> {
   feathersApp.hooks({
     around: {
       all: [
@@ -20,16 +22,15 @@ export const serverless = (feathersApp: FeathersApplication, ...middlewares: Mid
       ]
     }
   })
-  // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-  // @ts-ignore
-  const mixin: MixinApp<FeathersApplication> = {
-    set(key: string, value: BodyProperties) {
+  const app = feathersApp as any as Application<S, C>
+  Object.assign(app, {
+    set<L extends keyof C & string>(name: L, value: C[L]) {
       if (!this.variables) {
         this.variables = {}
       }
 
       Object.assign(this.variables, {
-        [key]: value
+        [name]: value
       })
 
       return this
@@ -39,19 +40,9 @@ export const serverless = (feathersApp: FeathersApplication, ...middlewares: Mid
       return this.variables?.[key]
     },
 
-    async setup(func) {
-      this.setupFunc = func
-      return this
-    },
-
     handler() {
       this.emit('handlerstarted')
       return async (event, context, cb) => {
-        if (!this.setupPromise) {
-          this.setupPromise = typeof this.setupFunc === 'function' ? this.setupFunc(this) : Promise.resolve()
-        }
-
-        await this.setupPromise
 
         const extraParams = await configureAuthentication(feathersApp, event)
 
@@ -108,7 +99,9 @@ export const serverless = (feathersApp: FeathersApplication, ...middlewares: Mid
           })
       }
     }
-  }
+  } as Application)
 
-  return Proto.mixin(mixin, feathersApp)
+  app.configure(routing() as any)
+
+  return app
 }

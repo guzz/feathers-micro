@@ -1,4 +1,4 @@
-import { FeathersApplication, Query } from '@feathersjs/feathers'
+import { Application as FeathersApplication, Query } from '@feathersjs/feathers'
 import {
   APIGatewayProxyHandler,
   APIGatewayProxyEvent,
@@ -6,13 +6,15 @@ import {
   APIGatewayProxyResult,
   Callback
 } from 'aws-lambda'
-import { FeathersMethod, HttpMethod } from './methods'
+// Externals
 export { FeathersApplication, Query }
 export { APIGatewayProxyHandler, APIGatewayProxyEvent, LambdaContext }
 export type ServerlessGatewayProxyEvent = Pick<
-  APIGatewayProxyEvent,
-  'httpMethod' | 'body' | 'path' | 'queryStringParameters' | 'headers' | 'resource'
+APIGatewayProxyEvent,
+'httpMethod' | 'body' | 'path' | 'queryStringParameters' | 'headers' | 'resource'
 >
+// Helpers
+import { FeathersMethod, HttpMethod } from './methods'
 export type Maybe<T> = T | undefined | null
 export type BodyPropertiesValues =
   | string
@@ -28,16 +30,7 @@ export type HttpMethodValues = (typeof HttpMethod)[HttpMethodKeys]
 type FeathersMethodType = typeof FeathersMethod
 type FeathersMethodKeys = keyof FeathersMethodType
 export type FeathersMethodValues = (typeof FeathersMethod)[FeathersMethodKeys]
-export interface ServerlessConnectorMixin {
-  variables?: BodyProperties
-  setupFunc: Maybe<(app: FeathersApplication) => Promise<unknown>>
-  setupPromise: Maybe<Promise<unknown>>
-  emit: (key: string) => void
-  set: (key: string, value: BodyProperties) => FeathersApplication
-  get: (key: string) => Maybe<BodyProperties[string]>
-  setup: (func: Promise<unknown>) => Promise<FeathersApplication>
-  handler: () => APIGatewayProxyHandler
-}
+// Middleware
 export type ServerlessParams = {
   body: BodyProperties
   method: FeathersMethodValues
@@ -48,7 +41,6 @@ export type ServerlessParams = {
   feathersMethod: FeathersMethodValues
   getParamsFromBody: boolean
 }
-export type MixinApp<T> = T & ServerlessConnectorMixin
 export type ServerlessMiddlewareParams = {
   event: ServerlessGatewayProxyEvent
   cb: Callback<APIGatewayProxyResult>
@@ -56,3 +48,9 @@ export type ServerlessMiddlewareParams = {
 }
 export type MiddlewareResponse = Promise<ServerlessParams | APIGatewayProxyResult | void>
 export type Middleware = (ctx: ServerlessMiddlewareParams, params: ServerlessParams) => MiddlewareResponse
+// Application
+export interface ServerlessApplication {
+  variables?: BodyProperties
+  handler: () => APIGatewayProxyHandler
+}
+export type Application<Services = any, Settings = any> = FeathersApplication<Services, Settings > & ServerlessApplication
