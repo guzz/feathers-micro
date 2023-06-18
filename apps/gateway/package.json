@@ -6,7 +6,11 @@
   "keywords": [
     "feathers"
   ],
-  "author": {},
+  "author": {
+    "name" : "Gustavo Junqueira",
+    "email" : "gsotero@gmail.com",
+    "url" : "https://github.com/guzz"
+  },
   "contributors": [],
   "bugs": {},
   "engines": {
