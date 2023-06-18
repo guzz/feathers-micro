@@ -56,3 +56,20 @@ export const getOptions = (app: Application): MicroServiceOptions => {
 You can create resolvers and hooks as with any normal feathers service.
 
 To check a functional setup, look at the [example apps](https://github.com/guzz/feathers-micro/tree/main/apps).
+
+## Session ID
+
+When dealing with micro services logging is one of the biggest difficulties, is important to have a tracer id from one component to the other to understand the flow of each call.
+
+To configure a session id on your service calls update your app.ts, this feature is only supported in feathers koa.
+
+```ts
+...
+
+import { setKoaGateway } from '@feathers-micro/microservice'
+
+...
+
+app.configure(setKoaGateway([app.get('authentication')?.secret ?? '']))
+
+```

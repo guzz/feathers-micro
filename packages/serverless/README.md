@@ -16,7 +16,7 @@ yarn add @feathers-micro/serverless
 
 **Update your app.ts and declarations.ts**
 
-```js
+```ts
 // ./src/app.ts
 import { feathers } from '@feathersjs/feathers'
 import configuration from '@feathersjs/configuration'
