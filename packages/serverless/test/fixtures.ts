@@ -3,22 +3,22 @@ import { AuthenticationService, JWTStrategy, authenticate } from '@feathersjs/au
 import { MemoryService, memory } from '@feathersjs/memory'
 /* eslint-disable @typescript-eslint/ban-ts-comment */
 import 'mocha'
-import { feathers, Application } from '@feathersjs/feathers'
+import { feathers } from '@feathersjs/feathers'
 
-import { serverless, MixinApp, Middleware } from '../src'
+import { serverless, Application as ServerlessApplication, Middleware } from '../src'
 
 export type Person = {
   email: string
   password: string
 }
 
-export type TestApplication = Application<{
+export type TestApplication = ServerlessApplication<{
   users: MemoryService<Person>
   authentication: AuthenticationService
 }>
 
 export const createTestApp = async (samplePerson: Person, middlewares?: Middleware[]) => {
-  const app: MixinApp<TestApplication> = serverless(feathers(), ...(middlewares ?? []))
+  const app: TestApplication = serverless(feathers(), ...(middlewares ?? []))
   app.set('authentication', {
     entity: 'user',
     service: 'users',
