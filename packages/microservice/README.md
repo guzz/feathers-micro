@@ -57,6 +57,30 @@ You can create resolvers and hooks as with any normal feathers service.
 
 To check a functional setup, look at the [example apps](https://github.com/guzz/feathers-micro/tree/main/apps).
 
+## Authentication
+
+If you want to have your authentication as a serverless application, configure your authentication.ts file.
+
+```ts
+import { AuthenticationService } from '@feathersjs/authentication'
+import { MicroAuthentication } from '@feathers-micro/microservice'
+
+import type { Application } from './declarations'
+
+declare module './declarations' {
+  interface ServiceTypes {
+    authentication: AuthenticationService
+  }
+}
+
+export const authentication = (app: Application) => {
+  const authentication = new MicroAuthentication(app, 'authentication', { url: 'http://localhost:3010/dev', getParamsFromBody: true })
+  // @ts-ignore
+  app.use('authentication', authentication)
+}
+
+```
+
 ## Session ID
 
 When dealing with micro services logging is one of the biggest difficulties, is important to have a tracer id from one component to the other to understand the flow of each call.
