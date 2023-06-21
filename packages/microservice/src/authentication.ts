@@ -1,12 +1,6 @@
 import { AuthenticationRequest } from '@feathersjs/authentication'
 import { Application, Params } from '@feathersjs/feathers'
-import {
-  AuthenticationService,
-  AuthenticationStrategy,
-  ConnectionEvent,
-  AuthenticationResult
-} from '@feathersjs/authentication'
-import { SignOptions, Secret, VerifyOptions } from 'jsonwebtoken'
+import { AuthenticationService } from '@feathersjs/authentication'
 import { IncomingMessage, ServerResponse } from 'http'
 import axios, { AxiosError, AxiosInstance, AxiosRequestConfig } from 'axios'
 
